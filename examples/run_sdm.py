@@ -11,8 +11,7 @@ if __name__ == "__main__":
     data = pd.read_csvdata = pd.read_csv("./movielens_sample.txt")
     data['genres'] = list(map(lambda x: x.split('|')[0], data['genres'].values))
 
-    sparse_features = ["movie_id", "user_id",
-                       "gender", "age", "occupation", "zip", "genres"]
+    sparse_features = ["movie_id", "user_id", "gender", "age", "occupation", "zip", "genres"]
     SEQ_LEN_short = 5
     SEQ_LEN_prefer = 50
 
@@ -47,17 +46,13 @@ if __name__ == "__main__":
                             SparseFeat("occupation", feature_max_idx['occupation'], 16),
                             SparseFeat("zip", feature_max_idx['zip'], 16),
                             VarLenSparseFeat(SparseFeat('short_movie_id', feature_max_idx['movie_id'], embedding_dim,
-                                                        embedding_name="movie_id"), SEQ_LEN_short, 'mean',
-                                             'short_sess_length'),
+                                                        embedding_name="movie_id"), SEQ_LEN_short, 'mean', 'short_sess_length'),
                             VarLenSparseFeat(SparseFeat('prefer_movie_id', feature_max_idx['movie_id'], embedding_dim,
-                                                        embedding_name="movie_id"), SEQ_LEN_prefer, 'mean',
-                                             'prefer_sess_length'),
+                                                        embedding_name="movie_id"), SEQ_LEN_prefer, 'mean', 'prefer_sess_length'),
                             VarLenSparseFeat(SparseFeat('short_genres', feature_max_idx['genres'], embedding_dim,
-                                                        embedding_name="genres"), SEQ_LEN_short, 'mean',
-                                             'short_sess_length'),
+                                                        embedding_name="genres"), SEQ_LEN_short, 'mean', 'short_sess_length'),
                             VarLenSparseFeat(SparseFeat('prefer_genres', feature_max_idx['genres'], embedding_dim,
-                                                        embedding_name="genres"), SEQ_LEN_prefer, 'mean',
-                                             'prefer_sess_length'),
+                                                        embedding_name="genres"), SEQ_LEN_prefer, 'mean', 'prefer_sess_length'),
                             ]
 
     item_feature_columns = [SparseFeat('movie_id', feature_max_idx['movie_id'], embedding_dim)]
@@ -83,8 +78,7 @@ if __name__ == "__main__":
 
     model.compile(optimizer='adam', loss=sampledsoftmaxloss)
 
-    history = model.fit(train_model_input, train_label,  # train_label,
-                        batch_size=512, epochs=1, verbose=1, validation_split=0.0, )
+    history = model.fit(train_model_input, train_label, batch_size=256, epochs=200, verbose=1, validation_split=0.0, )
 
     K.set_learning_phase(False)
     # 3.Define Model,train,predict and evaluate
