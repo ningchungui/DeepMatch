@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
     model.compile(optimizer='adam', loss=sampledsoftmaxloss)
 
-    history = model.fit(train_model_input, train_label, batch_size=256, epochs=200, verbose=1, validation_split=0.0, )
+    history = model.fit(train_model_input, train_label, batch_size=256, epochs=500, verbose=1, validation_split=0.0, )
 
     K.set_learning_phase(False)
     # 3.Define Model,train,predict and evaluate
