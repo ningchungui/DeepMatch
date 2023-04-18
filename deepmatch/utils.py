@@ -23,8 +23,7 @@ from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.layers import Lambda
 
 
-class NegativeSampler(
-    namedtuple('NegativeSampler', ['sampler', 'num_sampled', 'item_name', 'item_count', 'distortion'])):
+class NegativeSampler(namedtuple('NegativeSampler', ['sampler', 'num_sampled', 'item_name', 'item_count', 'distortion'])):
     """ NegativeSampler
     Args:
         sampler: sampler name,['inbatch', 'uniform', 'frequency' 'adaptive',] .

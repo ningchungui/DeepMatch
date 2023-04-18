@@ -25,8 +25,7 @@ class DotAttention(Layer):
 
     def build(self, input_shape):
         if not isinstance(input_shape, list) or len(input_shape) != 2:
-            raise ValueError('A `DotAttention` layer should be called '
-                             'on a list of 2 tensors')
+            raise ValueError('A `DotAttention` layer should be called on a list of 2 tensors')
         if input_shape[0][-1] != input_shape[1][-1]:
             raise ValueError('query_size should keep the same dim with key_size')
         super(DotAttention, self).build(input_shape)
@@ -59,18 +58,17 @@ class ConcatAttention(Layer):
 
     def build(self, input_shape):
         if not isinstance(input_shape, list) or len(input_shape) != 2:
-            raise ValueError('A `ConcatAttention` layer should be called '
-                             'on a list of 2 tensors')
+            raise ValueError('A `ConcatAttention` layer should be called on a list of 2 tensors')
         self.projection_layer = Dense(units=1, activation='tanh')
         super(ConcatAttention, self).build(input_shape)
 
     def call(self, inputs, mask=None, **kwargs):
-        query, key = inputs
-        q_k = tf.concat([query, key], axis=-1)
-        output = self.projection_layer(q_k)
+        query, key = inputs  # query(None,50,32), key(None,50,32)
+        q_k = tf.concat([query, key], axis=-1)  # q_k(None,50,64)
+        output = self.projection_layer(q_k)  # output(None,50,1)
         if self.scale == True:
             output = output / (key.get_shape().as_list()[-1] ** 0.5)
-        output = tf.transpose(output, [0, 2, 1])
+        output = tf.transpose(output, [0, 2, 1])  # output(None,1,50)
         return output
 
     def compute_output_shape(self, input_shape):
@@ -100,15 +98,14 @@ class SoftmaxWeightedSum(Layer):
 
     def build(self, input_shape):
         if not isinstance(input_shape, list) or len(input_shape) != 3:
-            raise ValueError('A `SoftmaxWeightedSum` layer should be called '
-                             'on a list of 3 tensors')
+            raise ValueError('A `SoftmaxWeightedSum` layer should be called on a list of 3 tensors')
         if input_shape[0][-1] != input_shape[2][-1]:
             raise ValueError('query_size should keep the same dim with key_mask_size')
         self.dropout = Dropout(self.dropout_rate, seed=self.seed)
         super(SoftmaxWeightedSum, self).build(input_shape)
 
     def call(self, inputs, mask=None, training=None, **kwargs):
-        align, value, key_masks = inputs
+        align, value, key_masks = inputs  # align(None, 1, 50), value(None, 50, 32), key_masks(None, 1, 50)
         paddings = tf.ones_like(align) * (-2 ** 32 + 1)
         align = tf.where(key_masks, align, paddings)
         if self.future_binding:
@@ -151,20 +148,19 @@ class AttentionSequencePoolingLayer(Layer):
 
     def build(self, input_shape):
         if not isinstance(input_shape, list) or len(input_shape) != 3:
-            raise ValueError('A `SequenceFeatureMask` layer should be called '
-                             'on a list of 3 inputs')
+            raise ValueError('A `SequenceFeatureMask` layer should be called on a list of 3 inputs')
         self.concat_att = ConcatAttention()
         self.softmax_weight_sum = SoftmaxWeightedSum(dropout_rate=self.dropout_rate, future_binding=False)
         super(AttentionSequencePoolingLayer, self).build(input_shape)
 
     def call(self, inputs, mask=None, **kwargs):
-        queries, keys, keys_length = inputs
+        queries, keys, keys_length = inputs   # inputs = [user_emb_output(None,1,32), prefer_emb(None,50,32), prefer_sess_length(None,1)]
         hist_len = keys.get_shape()[1]
-        key_masks = tf.sequence_mask(keys_length, hist_len)
-        queries = tf.tile(queries, [1, hist_len, 1])  # [batch_size, T, units]
-        attention_score = self.concat_att([queries, keys])  # [batch_size, 1, units]
+        key_masks = tf.sequence_mask(keys_length, hist_len)  # key_masks(None, 1, 50)
+        queries = tf.tile(queries, [1, hist_len, 1])  # queries(None, 50, 32)
+        attention_score = self.concat_att([queries, keys])  # attention_score(None,1,50)
 
-        outputs = self.softmax_weight_sum([attention_score, keys, key_masks])
+        outputs = self.softmax_weight_sum([attention_score, keys, key_masks])  # attention_score(None, 1, 50), value(None, 50, 32), key_masks(None, 1, 50)
         # [batch_size, units]
         return outputs
 
@@ -367,7 +363,6 @@ class UserAttention(Layer):
 
     def get_config(self, ):
         config = {'num_units': self.num_units, 'activation': self.activation, 'use_res': self.use_res,
-                  'dropout_rate': self.dropout_rate,
-                  'scale': self.scale, 'seed': self.seed, }
+                  'dropout_rate': self.dropout_rate, 'scale': self.scale, 'seed': self.seed, }
         base_config = super(UserAttention, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
